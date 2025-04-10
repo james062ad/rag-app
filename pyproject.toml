@@ -1,25 +1,20 @@
-[project]
+[tool.poetry]
 name = "rag-app"
 version = "0.1.0"
-description = ""
-authors = [
-    {name = "james062ad",email = "jameslambert062@gmail.com"}
-]
-readme = "README.md"
-requires-python = ">=3.13"
-dependencies = [
-    "fastapi (>=0.115.12,<0.116.0)",
-    "uvicorn (>=0.34.0,<0.35.0)",
-    "openai (>=1.72.0,<2.0.0)",
-    "python-dotenv (>=1.1.0,<2.0.0)",
-    "numpy (>=2.2.4,<3.0.0)"
-]
+description = "RAG microservice using FastAPI and OpenAI"
+authors = ["Geoffrey <you@example.com>"]
 
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.115.0"
+uvicorn = "^0.34.0"
+openai = "^1.72.0"
+python-dotenv = "^1.1.0"
+numpy = "^1.26.0"
 
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry.group.dev.dependencies]
+[tool.poetry.dev-dependencies]
 pytest = "^8.3.5"
 
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
