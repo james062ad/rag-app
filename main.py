@@ -2,16 +2,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from retriever import retrieve_top_document
-from embedder import embedded_documents
 
 app = FastAPI()
 
-# ✅ Allow Lovable.dev frontend to connect (you can restrict later if needed)
+# ✅ Enable full CORS for all origins (or restrict if needed)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # or use ["https://query-scribe-reveal.lovable.app"]
+    allow_origins=["*"],  # Replace with ["https://query-scribe-reveal.lovable.app"] if you want to lock it down
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["*"],  # ✅ Must include "OPTIONS" to support browser preflight
     allow_headers=["*"],
 )
 
@@ -20,7 +19,7 @@ class GenerateRequest(BaseModel):
 
 @app.get("/")
 def root():
-    return {"message": "Scientific RAG Assistant is running!"}
+    return {"message": "Scientific RAG Assistant is live!"}
 
 @app.post("/generate")
 def generate_answer(request: GenerateRequest):
@@ -29,5 +28,5 @@ def generate_answer(request: GenerateRequest):
         "query": request.query,
         "matched_title": top_doc["title"],
         "similarity": round(top_doc["score"], 4),
-        "answer": top_doc["content"],
+        "answer": top_doc["content"]
     }
