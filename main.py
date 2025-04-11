@@ -1,69 +1,60 @@
-import os
-import openai
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from retriever import retrieve_top_document
 
-# Load environment variables
-load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+import os
+from supabase import create_client
 
+# ✅ Load .env variables
+load_dotenv()
+
+# ✅ Load environment variables
+supabase_url = os.getenv("SUPABASE_URL")
+supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+
+# ✅ Create Supabase client
+supabase = create_client(supabase_url, supabase_key)
+
+# ✅ Initialize FastAPI app
 app = FastAPI()
 
-# ✅ Enable CORS (for Lovable.dev frontend)
+# ✅ Allow CORS from all origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Optionally replace with ["https://query-scribe-reveal.lovable.app"]
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Request model
+# ✅ Input schema
 class GenerateRequest(BaseModel):
     query: str
 
-# Response model
+# ✅ Output schema
 class GenerateResponse(BaseModel):
     query: str
     matched_title: str
     similarity: float
     answer: str
 
+# ✅ POST endpoint
 @app.post("/generate", response_model=GenerateResponse)
-async def generate_answer(request: GenerateRequest):
-    # ✅ Unpack top doc and score from retriever
+def generate_answer(request: GenerateRequest):
     top_doc, top_score = retrieve_top_document(request.query)
 
-    # Construct prompt for OpenAI
-    prompt = f"""
-    You are a scientific assistant. Use the following passage to answer the user's question as accurately as possible.
-
-    Context:
-    {top_doc['content']}
-
-    Question:
-    {request.query}
-
-    Answer:
-    """
-
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "You are a helpful scientific assistant."},
-            {"role": "user", "content": prompt},
-        ],
-        temperature=0.2,
-    )
-
-    answer = response.choices[0].message.content.strip()
+    # ✅ Save to Supabase
+    supabase.table("documents").insert({
+        "title": top_doc["title"],
+        "content": top_doc["content"],
+        "embedding": top_doc["embedding"]
+    }).execute()
 
     return GenerateResponse(
         query=request.query,
         matched_title=top_doc["title"],
-        similarity=round(top_score, 4),
-        answer=answer
+        similarity=top_score,
+        answer=top_doc["content"]
     )
