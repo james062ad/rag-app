@@ -1,6 +1,5 @@
 import os
 import openai
-import numpy as np
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -13,10 +12,10 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 
 app = FastAPI()
 
-# Allow CORS (for Lovable frontend)
+# ✅ Enable CORS (for Lovable.dev frontend)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Replace with frontend URL for production
+    allow_origins=["*"],  # Optionally replace with ["https://query-scribe-reveal.lovable.app"]
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -35,16 +34,24 @@ class GenerateResponse(BaseModel):
 
 @app.post("/generate", response_model=GenerateResponse)
 async def generate_answer(request: GenerateRequest):
-    top_doc, score = retrieve_top_document(request.query)
+    # ✅ Unpack top doc and score from retriever
+    top_doc, top_score = retrieve_top_document(request.query)
 
-    prompt = (
-        f"You are a scientific assistant. Use the passage below to answer the question as accurately as possible.\n\n"
-        f"Context:\n{top_doc['content']}\n\n"
-        f"Question: {request.query}\n\nAnswer:"
-    )
+    # Construct prompt for OpenAI
+    prompt = f"""
+    You are a scientific assistant. Use the following passage to answer the user's question as accurately as possible.
+
+    Context:
+    {top_doc['content']}
+
+    Question:
+    {request.query}
+
+    Answer:
+    """
 
     response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",  # You can change model
+        model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": "You are a helpful scientific assistant."},
             {"role": "user", "content": prompt},
@@ -54,9 +61,9 @@ async def generate_answer(request: GenerateRequest):
 
     answer = response.choices[0].message.content.strip()
 
-    return {
-        "query": request.query,
-        "matched_title": top_doc["title"],
-        "similarity": round(score, 4),
-        "answer": answer,
-    }
+    return GenerateResponse(
+        query=request.query,
+        matched_title=top_doc["title"],
+        similarity=round(top_score, 4),
+        answer=answer
+    )
