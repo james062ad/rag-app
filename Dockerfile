@@ -1,34 +1,28 @@
-# Use an official Python base image
+# Use official Python base image
 FROM python:3.11-slim
 
-# Set environment variables
-ENV POETRY_VERSION=1.7.1
-ENV PATH="/root/.local/bin:$PATH"
+# Set work directory
+WORKDIR /app
 
 # Install system dependencies
-RUN apt-get update \
- && apt-get install -y curl build-essential git \
- && apt-get clean
+RUN apt-get update && apt-get install -y curl build-essential
 
 # Install Poetry
 RUN curl -sSL https://install.python-poetry.org | python3 -
+ENV PATH="/root/.local/bin:$PATH"
 
-# Set the working directory
-WORKDIR /app
-
-# Copy only Poetry files to cache deps first
+# Copy pyproject files
 COPY pyproject.toml poetry.lock ./
 
-# Install dependencies + Supabase
+# Install dependencies
 RUN poetry config virtualenvs.create false \
- && poetry install --no-interaction --no-ansi \
- && poetry add supabase
+ && poetry install --no-interaction --no-ansi
 
-# Copy the rest of the application code
+# Copy app files
 COPY . .
 
-# Expose port for FastAPI
+# Expose FastAPI port
 EXPOSE 8000
 
-# Start the app
+# Start app
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
