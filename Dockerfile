@@ -1,30 +1,27 @@
-# Use official Python image
+# Use slim Python image
 FROM python:3.11-slim
-
-# Set environment vars
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
 
 # Set working directory
 WORKDIR /app
 
-# Install system deps
-RUN apt-get update \
- && apt-get install -y curl build-essential \
- && rm -rf /var/lib/apt/lists/*
+# Install system dependencies
+RUN apt-get update && apt-get install -y curl build-essential && rm -rf /var/lib/apt/lists/*
 
 # Install Poetry
 RUN curl -sSL https://install.python-poetry.org | python3 - \
- && ln -s /root/.local/bin/poetry /usr/local/bin/poetry
+    && ln -s /root/.local/bin/poetry /usr/local/bin/poetry
 
-# Copy project files
+# Copy project metadata first
 COPY poetry.lock pyproject.toml ./
+
+# Disable virtualenvs + install deps
 RUN poetry config virtualenvs.create false && poetry install --no-interaction --no-ansi
 
+# Copy rest of the code
 COPY . .
 
-# Expose FastAPI port
+# Expose port
 EXPOSE 8000
 
-# Run FastAPI via Uvicorn
+# Start server
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
