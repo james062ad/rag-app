@@ -3,30 +3,45 @@
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
+from supabase import create_client, Client
 from data import documents
 
-# Load the .env file to get the OpenAI API key
+# Load API keys from .env
 load_dotenv()
-client = OpenAI()
 
-# Function to get the embedding for a given text
-def get_embedding(text, model="text-embedding-ada-002"):
+# Set up OpenAI
+client = OpenAI()
+openai_model = "text-embedding-ada-002"
+
+# Set up Supabase
+supabase_url = os.getenv("SUPABASE_URL")
+supabase_key = os.getenv("SUPABASE_KEY")
+supabase: Client = create_client(supabase_url, supabase_key)
+
+# Generate embedding for given text
+def get_embedding(text):
     response = client.embeddings.create(
-        input=[text],
-        model=model
+        model=openai_model,
+        input=[text]
     )
     return response.data[0].embedding
 
-# List to store embedded documents
-embedded_documents = []
-
-# Generate and store embeddings
+# Embed and insert each document
 for doc in documents:
     embedding = get_embedding(doc["content"])
-    embedded_documents.append({
+
+    data = {
         "title": doc["title"],
         "content": doc["content"],
         "embedding": embedding
-    })
+    }
 
-print("✅ Embedded all documents!")
+    response = supabase.table("documents").insert(data).execute()
+
+    if response.data:
+        print(f"✅ Inserted: {doc['title']}")
+    else:
+        print(f"❌ Failed to insert: {doc['title']}")
+        print(response)
+
+print("✅ All documents processed.")

@@ -1,23 +1,22 @@
 [tool.poetry]
 name = "rag-app"
 version = "0.1.0"
-description = "RAG microservice using FastAPI and OpenAI"
-authors = ["Geoffrey <you@example.com>"]
+description = "Retrieval-Augmented Generation microservice using FastAPI and OpenAI."
+authors = ["Example Author <author@example.com>"]
+package-mode = false
 
 [tool.poetry.dependencies]
-python = "^3.11"
-fastapi = "^0.115.0"
-uvicorn = "^0.34.0"
-openai = "^1.72.0"
-python-dotenv = "^1.1.0"
-numpy = "^1.26.0"
-supabase = "^2.15.0"
+python = ">=3.10"
+fastapi = ">=0.115.0"
+uvicorn = ">=0.34.0"
+openai = ">=1.72.0"
+"python-dotenv" = ">=1.1.0"
+numpy = ">=1.26.0"
+supabase = ">=2.15.0"
 
 [tool.poetry.dev-dependencies]
-pytest = "^8.3.5"
+pytest = ">=8.3.5"
 
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
-[tool.poetry]
-package-mode = false
